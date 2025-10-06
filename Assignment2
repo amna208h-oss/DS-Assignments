@@ -1,0 +1,72 @@
+# Import necessary libraries
+import pandas as pd
+
+# -----------------------------
+# STEP 1: Load Dataset
+# -----------------------------
+df = pd.read_csv("titanic.csv")   # or "iris.csv"
+print("✅ Dataset loaded successfully!\n")
+
+# -----------------------------
+# STEP 2: Before Cleaning Report
+# -----------------------------
+print("📊 BEFORE CLEANING:")
+print("Shape:", df.shape)
+print("\nMissing Values:\n", df.isnull().sum())
+print("\nDuplicate Rows:", df.duplicated().sum())
+
+# -----------------------------
+# STEP 3: Remove Duplicates
+# -----------------------------
+df = df.drop_duplicates()
+
+# -----------------------------
+# STEP 4: Handle Missing Values
+# -----------------------------
+# Example strategy: fill numeric columns with mean, categorical with mode
+for col in df.columns:
+    if df[col].dtype == 'float64' or df[col].dtype == 'int64':
+        df[col].fillna(df[col].mean(), inplace=True)
+    else:
+        df[col].fillna(df[col].mode()[0], inplace=True)
+
+# -----------------------------
+# STEP 5: Treat Outliers (IQR method)
+# -----------------------------
+numeric_cols = df.select_dtypes(include=['float64', 'int64']).columns
+
+for col in numeric_cols:
+    Q1 = df[col].quantile(0.25)
+    Q3 = df[col].quantile(0.75)
+    IQR = Q3 - Q1
+    lower = Q1 - 1.5 * IQR
+    upper = Q3 + 1.5 * IQR
+    df = df[(df[col] >= lower) & (df[col] <= upper)]
+
+# -----------------------------
+# STEP 6: After Cleaning Report
+# -----------------------------
+print("\n📈 AFTER CLEANING:")
+print("Shape:", df.shape)
+print("\nMissing Values:\n", df.isnull().sum())
+print("\nDuplicate Rows:", df.duplicated().sum())
+
+# -----------------------------
+# STEP 7: Save Cleaned Dataset
+# -----------------------------
+df.to_csv("cleaned_dataset.csv", index=False)
+print("\n💾 Cleaned dataset saved as 'cleaned_dataset.csv'")
+
+# -----------------------------
+# STEP 8: Summary Table
+# -----------------------------
+before_shape = (891, 12)  # Example for Titanic, replace with your dataset’s original shape
+after_shape = df.shape
+
+report = pd.DataFrame({
+    "Step": ["Original", "After Cleaning"],
+    "Rows_Columns": [before_shape, after_shape]
+})
+
+print("\n🧾 Before vs After Cleaning Report:")
+print(report)
